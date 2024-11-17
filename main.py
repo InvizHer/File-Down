@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from telegram import Update  # Add this import
+from telegram import Update
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, 
     CallbackQueryHandler, filters
@@ -17,10 +17,11 @@ from bot import (
 # Global variable for the bot application
 bot_app = None
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
+async def run_bot():
+    """Run the bot in the background"""
     global bot_app
+    
+    # Initialize bot
     bot_app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     
     # Add handlers
@@ -31,18 +32,29 @@ async def lifespan(app: FastAPI):
     bot_app.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, handle_file))
     bot_app.add_handler(CallbackQueryHandler(button_callback))
     
+    # Start the bot (without polling)
     await bot_app.initialize()
     await bot_app.start()
-    
-    # Start polling in a separate task
-    asyncio.create_task(bot_app.run_polling(allowed_updates=Update.ALL_TYPES))
-    
+    await bot_app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+
+async def stop_bot():
+    """Stop the bot gracefully"""
+    global bot_app
+    if bot_app:
+        await bot_app.updater.stop()
+        await bot_app.stop()
+        await bot_app.shutdown()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Run the bot in a separate task
+    bot_task = asyncio.create_task(run_bot())
     yield
-    
-    # Shutdown
-    await bot_app.stop()
-    await bot_app.shutdown()
-# Update FastAPI app with lifespan
+    # Shutdown: Stop the bot gracefully
+    await stop_bot()
+    await bot_task
+
+# Create FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
 # Add your API routes here (copy from api.py)
@@ -53,7 +65,13 @@ async def read_root():
 # Add other routes from api.py
 
 def main():
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Run the FastAPI application
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        loop="asyncio"
+    )
 
 if __name__ == "__main__":
     main()
