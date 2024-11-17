@@ -1,4 +1,3 @@
-"""
 __pycache__/
 *.pyc
 .env
@@ -8,4 +7,3 @@ ENV/
 .idea/
 .vscode/
 *.log
-"""
