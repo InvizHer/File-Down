@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from telegram import Update  # Add this import
 from telegram.ext import (
     Application, CommandHandler, MessageHandler, 
     CallbackQueryHandler, filters
@@ -41,7 +42,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     await bot_app.stop()
     await bot_app.shutdown()
-
 # Update FastAPI app with lifespan
 app = FastAPI(lifespan=lifespan)
 
