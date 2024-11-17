@@ -9,3 +9,4 @@ aiohttp==3.9.3
 cryptography==42.0.2
 requests==2.31.0
 python-magic==0.4.27
+humanize==4.9.0
