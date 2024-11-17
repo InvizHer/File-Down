@@ -3,7 +3,9 @@ from telegram.ext import Application
 from config import TELEGRAM_BOT_TOKEN
 import aiohttp
 from database import Database
+import logging
 
+logger = logging.getLogger(__name__)
 app = FastAPI()
 db = Database()
 
