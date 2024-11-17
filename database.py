@@ -1,19 +1,14 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import MONGODB_URI, DATABASE_NAME, COLLECTION_NAME
 import datetime
-from typing import Dict, Any
+from bson import ObjectId
 
 class Database:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.client = AsyncIOMotorClient(MONGODB_URI)
-            cls._instance.db = cls._instance.client[DATABASE_NAME]
-            cls._instance.collection = cls._instance.db[COLLECTION_NAME]
-        return cls._instance
-
+    def __init__(self):
+        self.client = AsyncIOMotorClient(MONGODB_URI)
+        self.db = self.client[DATABASE_NAME]
+        self.collection = self.db[COLLECTION_NAME]
+    
     async def save_file_info(self, file_id: str, file_name: str, file_size: int, 
                            mime_type: str, user_id: int, username: str, file_unique_id: str):
         document = {
@@ -27,7 +22,7 @@ class Database:
             "created_at": datetime.datetime.utcnow(),
             "download_count": 0,
             "last_accessed": datetime.datetime.utcnow(),
-            "status": "pending"
+            "status": "pending"  # pending, downloading, completed, failed
         }
         result = await self.collection.insert_one(document)
         return str(result.inserted_id)
@@ -50,7 +45,7 @@ class Database:
             }
         )
 
-    async def get_user_stats(self, user_id: int) -> Dict[str, Any]:
+    async def get_user_stats(self, user_id: int):
         pipeline = [
             {"$match": {"user_id": user_id}},
             {"$group": {
