@@ -107,3 +107,14 @@ async def handle_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await status_message.edit_text(
             "❌ Sorry, there was an error processing your file. Please try again."
         )
+
+def run_bot():
+    application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    
+    # Add handlers
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.Document.ALL, handle_file))
+    
+    # Start the bot
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
