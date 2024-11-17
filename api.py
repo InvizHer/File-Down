@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from telegram.ext import Application
-from config import TELEGRAM_BOT_TOKEN, BASE_URL
+from config import TELEGRAM_BOT_TOKEN
 import aiohttp
 from database import Database
 
@@ -9,7 +9,7 @@ db = Database()
 
 @app.get("/")
 async def read_root():
-    return {"message": "File Download Bot API is running"}
+    return {"status": "active", "message": "File Download Bot API is running"}
 
 @app.get("/download/{file_id}")
 async def download_file(file_id: str):
@@ -28,11 +28,20 @@ async def download_file(file_id: str):
         await db.increment_download_count(file_id)
         
         # Return file download information
-        return {
-            "file_name": file_info["file_name"],
-            "file_size": file_info["file_size"],
-            "mime_type": file_info["mime_type"],
-            "download_url": file_url
+        headers = {
+            "Content-Disposition": f"attachment; filename={file_info['file_name']}",
+            "Content-Type": file_info['mime_type']
         }
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(file_url) as response:
+                content = await response.read()
+                return Response(
+                    content=content,
+                    headers=headers,
+                    media_type=file_info['mime_type']
+                )
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Download error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to download file")
