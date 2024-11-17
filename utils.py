@@ -1,24 +1,18 @@
-import os
+import humanize
+from typing import Dict, Any
 import magic
-from typing import Optional
+import os
+
+def format_file_info(file_info: Dict[str, Any]) -> str:
+    return (
+        f"📁 File Information:\n\n"
+        f"Name: {file_info['file_name']}\n"
+        f"Size: {humanize.naturalsize(file_info['file_size'])}\n"
+        f"Type: {file_info['mime_type']}\n"
+        f"Downloads: {file_info['download_count']}\n"
+        f"Status: {file_info['status'].title()}"
+    )
 
 def get_mime_type(file_path: str) -> str:
     mime = magic.Magic(mime=True)
     return mime.from_file(file_path)
-
-def get_file_extension(mime_type: str) -> Optional[str]:
-    mime_to_ext = {
-        'video/mp4': '.mp4',
-        'video/x-matroska': '.mkv',
-        'video/quicktime': '.mov',
-        'video/x-msvideo': '.avi',
-        'video/x-ms-wmv': '.wmv',
-        'application/pdf': '.pdf',
-        'application/zip': '.zip',
-        'application/x-rar-compressed': '.rar',
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'audio/mpeg': '.mp3',
-        'audio/x-wav': '.wav',
-    }
-    return mime_to_ext.get(mime_type, '')
